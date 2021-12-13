@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -7,20 +6,17 @@ namespace PortScanner
 {
     public class Scanner
     {
-        public List<int> ActivePorts { get; }
+        public event EventHandler<ProgressArgs> ScanProgress;
+        private PortScanResult _scanResult;
+        private int _scannedPortsCounter;
 
-        public List<int> InactivePorts { get; }
-
-        public event EventHandler ScanStarted;
-        public event EventHandler ScanEnd;
-        
         public Scanner()
         {
-            this.ActivePorts = new List<int>();
-            this.InactivePorts = new List<int>();
+            this._scanResult = new PortScanResult();
+            this._scannedPortsCounter = 0;
         }
 
-        public void ScanPorts(int portScopeStart, int portScopeEnd, string hostname = "127.0.0.1")
+        public PortScanResult ScanPorts(int portScopeStart, int portScopeEnd, string hostname = "127.0.0.1")
         {
             ResetScanner();
 
@@ -33,40 +29,34 @@ namespace PortScanner
             }
 
             var CheckPortsFromScope = Task.WhenAll(tasks);
-            OnScanStarted();
             CheckPortsFromScope.Wait();
-            OnScanEnd();
-        }
-        protected virtual void OnScanStarted()
-        {
-            ScanStarted?.Invoke(this, EventArgs.Empty);
+
+            return _scanResult;
         }
 
-
-        protected virtual void OnScanEnd()
+        protected virtual void OnScanProgress(int portCounter)
         {
-            ScanEnd?.Invoke(this, EventArgs.Empty);
+            ScanProgress?.Invoke(this, new ProgressArgs(_scannedPortsCounter));
         }
 
         private void CheckPort(string hostname, int port)
         {
             try
             {
+                OnScanProgress(++_scannedPortsCounter);
                 TcpClient scanner = new TcpClient();
                 scanner.Connect(hostname, port);
-                this.ActivePorts.Add(port);
-                this.ActivePorts.Sort();
+                this._scanResult.ActivePorts.Add(port);
+                this._scanResult.ActivePorts.Sort();
             }
             catch
             {
-                InactivePorts.Add(port);
+                this._scanResult.InactivePorts.Add(port);
+                this._scanResult.InactivePorts.Sort();
             }
         }
 
-        private void ResetScanner()
-        {
-            this.ActivePorts.Clear();
-            this.InactivePorts.Clear();
-        }
+        private void ResetScanner() => this._scanResult = new PortScanResult();
     }
 }
+
