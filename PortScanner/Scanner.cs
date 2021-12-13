@@ -43,7 +43,6 @@ namespace PortScanner
         {
             try
             {
-                OnScanProgress(++_scannedPortsCounter);
                 TcpClient scanner = new TcpClient();
                 scanner.Connect(hostname, port);
                 this._scanResult.ActivePorts.Add(port);
@@ -53,6 +52,10 @@ namespace PortScanner
             {
                 this._scanResult.InactivePorts.Add(port);
                 this._scanResult.InactivePorts.Sort();
+            }
+            finally
+            {
+                OnScanProgress(++_scannedPortsCounter);
             }
         }
 
