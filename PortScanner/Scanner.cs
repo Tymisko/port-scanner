@@ -56,7 +56,11 @@ namespace PortScanner
             }
         }
 
-        private void ResetScanner() => this._scanResult = new PortScanResult();
+        private void ResetScanner()
+        {
+            this._scanResult = new PortScanResult();
+            this._scannedPortsCounter = 0;
+        } 
     }
 }
 
