@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -10,6 +11,9 @@ namespace PortScanner
 
         public List<int> InactivePorts { get; }
 
+        public event EventHandler ScanStarted;
+        public event EventHandler ScanEnd;
+        
         public Scanner()
         {
             this.ActivePorts = new List<int>();
@@ -29,7 +33,19 @@ namespace PortScanner
             }
 
             var CheckPortsFromScope = Task.WhenAll(tasks);
+            OnScanStarted();
             CheckPortsFromScope.Wait();
+            OnScanEnd();
+        }
+        protected virtual void OnScanStarted()
+        {
+            ScanStarted?.Invoke(this, EventArgs.Empty);
+        }
+
+
+        protected virtual void OnScanEnd()
+        {
+            ScanEnd?.Invoke(this, EventArgs.Empty);
         }
 
         private void CheckPort(string hostname, int port)
